@@ -1,0 +1,129 @@
+<?php 
+    include_once 'include/header.php';
+    $grand_total = 0;
+    $allItems = '';
+    $items = array();
+
+    $sql = " SELECT CONCAT(product_name, ' [', qty, ']') AS ItemQty, total_price FROM cart ";
+    $stmt = $conn->prepare($sql);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    while($row=$result->fetch_assoc()):
+         $grand_total += $row['total_price'];
+         $items[] = $row['ItemQty'];
+    endwhile;
+    $allItems = implode(", ",$items);
+
+?>
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-sm-12 col-md-6 col-lg-6 py-4 pb-4" id="order">
+            <h4 class="text-center text-primary">Confirm your order!</h4>
+            <form action="" method="POST" id="placeorder">
+                <div class="p-1 mb-4 bg-light rounded-3">
+                    <div class="container-fluid py-2 text-center">
+                        <table class="table">
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <h4 class="display-5">Products</h4>
+                                    </td>
+                                </tr>
+                                <?php 
+                            foreach ($items as $item) {
+                                ?>
+                                <tr>
+                                    <td><?php echo $item; ?></td>
+                                </tr>
+                                <?php
+                            }
+                            ?>
+                                <tr>
+                                    <td>Delivery charges: <b>Free</b></td>
+                                </tr>
+                                <tr>
+                                    <td>Total Amount Payable: <b><?php echo number_format($grand_total,2);?></b></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <!-- Form to send data into order table -->
+                        <input type="hidden" name="products" value="<?= $allItems; ?>">
+                        <input type="hidden" name="grand_total" value="<?= $grand_total; ?>">
+                        <div class="text-center">
+                            <p class="text-danger"><?php if(isset($_SESSION['error'])){echo $_SESSION['error'];} unset($_SESSION['error']);?></p>
+                        </div>
+                        <div class="form-group mb-3">
+                            <input type="text" name="name" class="form-control" placeholder="Enter your name.." required>
+                        </div>
+                        <div class="form-group mb-3">
+                            <input type="email" name="email" class="form-control" placeholder="Enter your email.." required>
+                        </div>
+                        <div class="form-group mb-3">
+                            <input type="text" name="phone" class="form-control" placeholder="Enter your phone.." required>
+                        </div>
+                        <div class="form-group mb-3">
+                            <textarea name="address" class="form-control"
+                                placeholder="Enter your address for delivery.." cols="10" rows="3" required></textarea>
+                        </div>
+                        <div class="form-group mb-3">
+                            <select name="pmode" class="form-select" required>
+                                <option selected>Select payment method</option>
+                                <option value="cod">Cash on delivery</option>
+                                <option value="jazzcash">Jazzcash</option>
+                                <option value="easypaisa">Easypaisa</option>
+                                <option value="card">Bank Card</option>
+                            </select>
+                        </div>
+                        <div class="form-group mb-3">
+                            <input type="submit" name="submit" value="Place order"
+                                class="btn btn-success btn-block w-100">
+                        </div>
+                    </div>
+                </div>
+            </form>
+
+        </div>
+    </div>
+
+</div>
+
+<script>
+$(document).ready(function() {
+
+    $("#placeorder").submit(function(e) {
+        e.preventDefault();
+
+        $.ajax({
+            url: 'action.php',
+            method: 'post',
+            data: $('form').serialize() + "&action=order",
+            success: function(response) {
+                $('#order').html(response);
+            }
+        });
+    });
+
+    // funtion cart number;
+    show_cart_number();
+
+    function show_cart_number() {
+        $.ajax({
+            url: 'action.php',
+            method: 'get',
+            data: {
+                cartItem: "cart_item"
+            },
+            success: function(response) {
+                $('#cart-item').html(response);
+            }
+        });
+    }
+
+});
+</script>
+
+
+<?php 
+    include_once 'include/footer.php';
+?>
